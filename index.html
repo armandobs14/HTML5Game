@@ -1,0 +1,116 @@
+<html>
+<head>
+	<title>Game2</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<script type="text/javascript" src="http://localhost:7070/socket.io/lib/socket.io.js"></script>
+	<script type="text/javascript" src="libs/jquery-2.0.3.min.js"></script>
+	<script type="text/javascript" src="libs/createjs.min.js"></script>
+	<script type="text/javascript" src="libs/Handler.js"></script>
+	<script type="text/javascript" src="libs/Network.js"></script>
+	<script type="text/javascript" src="assets/Coin.js"></script>
+	<script type="text/javascript" src="assets/Icon.js"></script>
+	<script type="text/javascript" src="assets/BuildingFactory.js"></script>
+	<script type="text/javascript" src="assets/Cloud.js"></script>
+	<script type="text/javascript" src="assets/Building.js"></script>
+	<script type="text/javascript" src="assets/TallBuilding.js"></script>
+	<script type="text/javascript" src="assets/House.js"></script>
+	<script type="text/javascript" src="assets/Game.js"></script>
+	<script type="text/javascript">
+		var queue;
+		var game;
+		var net;
+		var stage;
+		var progressBar;
+		var score = 0;
+		var userName = prompt("Name");
+		function init () {
+			game = new Game();
+			net = new Network("localhost:7070");
+			stage = document.querySelector("#stage");
+			stage.width = window.innerWidth;
+			stage.height = window.innerHeight;
+			stage = new createjs.Stage(stage);
+
+			var progressBarContainer = new createjs.Shape();
+			progressBarContainer.graphics.beginStroke("#000000").drawRect(0,0,500,50);
+			progressBarContainer.regX = 250;				
+			progressBarContainer.regY = 25;
+			progressBarContainer.x = window.innerWidth/2;
+			progressBarContainer.y = window.innerHeight/2;
+
+			progressBar = new createjs.Shape();
+			progressBar.graphics.beginFill("#222222").drawRect(0,0,1,50);
+			progressBar.shadow = new createjs.Shadow("#999",0,0,10);
+			progressBar.regX = 250;				
+			progressBar.regY = 25;
+			progressBar.x = 400;
+			progressBar.y = 300;
+
+			stage.addChild(progressBarContainer);
+			stage.addChild(progressBar);
+			stage.update();
+
+			queue = new createjs.LoadQueue();
+			queue.loadManifest([{id:"icon", src:"assets/images/icon.jpg"},{id:"coin",src:"assets/images/Coin.png"},{id:"cloud",src:"assets/images/Cloud.png"}]);
+			queue.addEventListener("complete",game.start(stage,queue));
+			queue.addEventListener("progress",progressHandler);
+		}
+
+		function progressHandler (event) { 
+			progressBar.graphics.clear();
+			progressBar.graphics.beginFill("#999").drawRect(0,0,500* event.progress,50);
+			progressBar.graphics.beginStroke("#000").drawRect(0,0,500,50)
+			progressBar.regX = 250;				
+			progressBar.regY = 25;
+			progressBar.x = 400;
+			progressBar.y = 300;
+			
+			stage.update();
+		}
+	</script>
+</head>
+<body onload="init()">
+	<canvas id="stage" width="800" height="600"></canvas>
+	<div id="chatBox">
+		<i id="close"></i>
+		<div class="clearfix"></div>
+		<div id="display">
+			<ul id="messageList"></ul>
+		</div>
+		<div id="boxInput">
+		<input type="text" id="textInput" placeholder="Mensagem"><button id="send">Send</button>
+		</div>
+	</div>
+	<script type="text/javascript">
+
+		$("#chatBox").hide();
+		
+		$("#close").click(function(){
+			$("#chatBox").toggle();
+		});
+
+		$("#textInput").keypress(function(event) {
+			if (event.which == 13) {
+      			event.preventDefault();
+        		message = {
+					user : userName,
+					message: $("#textInput").val()
+				}
+				net.send("message",message);
+				$("#textInput").val("");
+    		}
+		});
+
+		$("#send").click(function(){
+				message = {
+					user : userName,
+					message: $("#textInput").val()
+				}
+				net.send("message",message);
+				$("#textInput").val("");
+			});
+	</script>
+</body>
+</html>
+
